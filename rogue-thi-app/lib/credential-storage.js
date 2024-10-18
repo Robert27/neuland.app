@@ -92,16 +92,23 @@ export default class CredentialStorage {
         return
       }
 
-      const decrypted = await crypto.subtle.decrypt(
-        {
-          name: 'AES-GCM',
-          iv,
-        },
-        key,
-        encrypted
-      )
+      try {
+        const decrypted = await crypto.subtle.decrypt(
+          {
+            name: 'AES-GCM',
+            iv,
+          },
+          key,
+          encrypted
+        )
 
-      return arrayBufferToObject(decrypted)
+        return arrayBufferToObject(decrypted)
+      } catch (error) {
+        if (error.name === 'InvalidAccessError') {
+          await this.delete(id)
+        }
+        throw error
+      }
     } finally {
       db.close()
     }
